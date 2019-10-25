@@ -179,6 +179,9 @@ void ExportCSV::on_exportButton_clicked()
     countlist.append(CPAP_UserFlag1);
     countlist.append(CPAP_UserFlag2);
     countlist.append(CPAP_PressurePulse);
+    // @allen-n: Added pulse-ox data to countlist
+    countlist.append(OXI_Pulse);
+    countlist.append(OXI_SPO2);
 
     avglist.append(CPAP_Pressure);
     avglist.append(CPAP_IPAP);
@@ -240,7 +243,9 @@ void ExportCSV::on_exportButton_clicked()
         ui->progressBar->setValue(ui->progressBar->value() + 1);
         QApplication::processEvents();
 
-        Day *day = p_profile->GetDay(date, MT_CPAP);
+        // @allen-n: This will only get CPAP data, want MT_OXIMETER, so modify
+        // Day *day = p_profile->GetDay(date, MT_CPAP);
+        Day *day = p_profile->GetDay(date, MT_OXIMETER);
 
         if (day) {
             QString data;
@@ -343,7 +348,11 @@ void ExportCSV::on_exportButton_clicked()
                                 EventList *ev = fnd.value()[e];
 
                                 for (quint32 q = 0; q < ev->count(); q++) {
-                                    data = QDateTime::fromTime_t(ev->time(q) / 1000L).toString(Qt::ISODate);
+                                    // data = QDateTime::fromTime_t(ev->time(q) / 1000L).toString(Qt::ISODate);
+                                    // @allen-n: starting data as msecs since UTC 0 for plotting simplicity
+                                    // using toSecsSinceEpoch rather than toMSecsSinceEpoch since resolution of
+                                    // oximiter is >= 1s
+                                    data = QString::number((QDateTime::fromTime_t(ev->time(q) / 1000L)).toSecsSinceEpoch());
                                     data += sep + QString::number(sess->session());
                                     data += sep + schema::channel[key].code();
                                     data += sep + QString::number(ev->data(q), 'f', 2);
